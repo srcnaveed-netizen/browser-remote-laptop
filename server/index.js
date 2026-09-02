@@ -6,6 +6,20 @@ const app = express();
 const server = http.createServer(app);
 const io = new Server(server, { cors: { origin: '*' } });
 
+// Security: Password Protect the Web Interface
+app.use((req, res, next) => {
+    const b64auth = (req.headers.authorization || '').split(' ')[1] || '';
+    const [login, password] = Buffer.from(b64auth, 'base64').toString().split(':');
+
+    // YOUR LOGIN DETAILS:
+    if (login === 'admin' && password === 'school123') {
+        return next();
+    }
+
+    res.set('WWW-Authenticate', 'Basic realm="Secure Area"');
+    res.status(401).send('Authentication required to access this laptop.');
+});
+
 // Serve the web interface
 app.use(express.static('public'));
 
