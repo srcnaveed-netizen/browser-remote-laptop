@@ -8,7 +8,7 @@ import time
 import threading
 
 # IMPORTANT: Put your Railway URL here!
-SERVER_URL = "https://YOUR_RAILWAY_URL_HERE.up.railway.app" 
+SERVER_URL = "https://browser-remote-laptop.onrender.com" 
 
 # Disable failsafe so you can move the mouse to the very edges of the screen
 pyautogui.FAILSAFE = False
@@ -46,7 +46,7 @@ def on_key_press(data):
 
 def stream_screen():
     with mss.mss() as sct:
-        monitor = sct.monitors[1] # Primary monitor
+        monitor = sct.monitors[0] # All monitors
         while True:
             if sio.connected:
                 # Capture screen
@@ -54,12 +54,11 @@ def stream_screen():
                 # Resize to 720p for faster internet streaming
                 img = cv2.resize(img, (1280, 720))
                 
-                # Compress into JPEG
-                _, buffer = cv2.imencode('.jpg', img, [cv2.IMWRITE_JPEG_QUALITY, 40])
-                jpg_as_text = base64.b64encode(buffer).decode('utf-8')
+                # Compress into JPEG (slightly higher quality now that it's binary)
+                _, buffer = cv2.imencode('.jpg', img, [cv2.IMWRITE_JPEG_QUALITY, 60])
                 
-                # Send to Railway
-                sio.emit('screen_frame', jpg_as_text)
+                # Send raw binary directly to Railway/Render (Much faster than Base64)
+                sio.emit('screen_frame', buffer.tobytes())
             
             # Stream at roughly 20 Frames Per Second
             time.sleep(0.05) 

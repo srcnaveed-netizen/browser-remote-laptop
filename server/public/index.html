@@ -10,16 +10,38 @@
     </style>
 </head>
 <body>
+    <input type="text" id="keyboard-trap" style="position: absolute; opacity: 0; pointer-events: none; top: 0;" autocomplete="off" autocorrect="off" autocapitalize="off" spellcheck="false">
     <img id="screen" alt="Waiting for home laptop to connect..."/>
 
     <script src="/socket.io/socket.io.js"></script>
     <script>
         const socket = io();
         const screen = document.getElementById('screen');
+        const keyboardTrap = document.getElementById('keyboard-trap');
 
-        // Display incoming video frames
+        // Display incoming video frames (Fast Binary Mode)
         socket.on('screen_frame', (data) => {
-            screen.src = "data:image/jpeg;base64," + data;
+            const blob = new Blob([data], { type: 'image/jpeg' });
+            const url = URL.createObjectURL(blob);
+            screen.src = url;
+            screen.onload = () => URL.revokeObjectURL(url); // Prevent memory leaks
+        });
+
+        // Trigger Mobile Keyboard on Tap
+        screen.addEventListener('touchstart', (e) => {
+            keyboardTrap.focus();
+        });
+
+        // Capture Mobile Typing
+        keyboardTrap.addEventListener('input', (e) => {
+            if (e.data) socket.emit('key_press', { key: e.data.toLowerCase() });
+            keyboardTrap.value = ""; // clear buffer
+        });
+        
+        // Capture PC Typing & Backspace/Enter on Mobile
+        window.addEventListener('keydown', (e) => {
+            if (e.key !== "F11" && e.key !== "F12") e.preventDefault(); 
+            socket.emit('key_press', { key: e.key.toLowerCase() });
         });
 
         // Capture Mouse Movement
@@ -34,12 +56,6 @@
         screen.addEventListener('mousedown', (e) => {
             const button = e.button === 0 ? 'left' : (e.button === 2 ? 'right' : 'middle');
             socket.emit('mouse_click', { button });
-        });
-
-        // Capture Keyboard Typing
-        window.addEventListener('keydown', (e) => {
-            e.preventDefault(); 
-            socket.emit('key_press', { key: e.key.toLowerCase() });
         });
 
         // Prevent right-click menu from opening in the browser
