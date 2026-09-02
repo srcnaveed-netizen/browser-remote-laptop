@@ -46,7 +46,7 @@ def on_key_press(data):
 
 def stream_screen():
     with mss.mss() as sct:
-        monitor = sct.monitors[0] # All monitors
+        monitor = sct.monitors[1] # Primary monitor (Includes Taskbar and Start Menu)
         while True:
             if sio.connected:
                 # Capture screen

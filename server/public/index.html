@@ -10,6 +10,7 @@
     </style>
 </head>
 <body>
+    <button id="kb-btn" style="position: absolute; top: 20px; right: 20px; z-index: 9999; background: rgba(255,255,255,0.2); border: 1px solid rgba(255,255,255,0.5); border-radius: 8px; font-size: 24px; padding: 10px; cursor: pointer; display: none;">⌨️</button>
     <input type="text" id="keyboard-trap" style="position: absolute; opacity: 0; pointer-events: none; top: 0;" autocomplete="off" autocorrect="off" autocapitalize="off" spellcheck="false">
     <img id="screen" alt="Waiting for home laptop to connect..."/>
 
@@ -18,6 +19,12 @@
         const socket = io();
         const screen = document.getElementById('screen');
         const keyboardTrap = document.getElementById('keyboard-trap');
+        const kbBtn = document.getElementById('kb-btn');
+
+        // Show the keyboard button ONLY if on a touchscreen device
+        if ('ontouchstart' in window || navigator.maxTouchPoints > 0) {
+            kbBtn.style.display = 'block';
+        }
 
         // Display incoming video frames (Fast Binary Mode)
         socket.on('screen_frame', (data) => {
@@ -27,8 +34,9 @@
             screen.onload = () => URL.revokeObjectURL(url); // Prevent memory leaks
         });
 
-        // Trigger Mobile Keyboard on Tap
-        screen.addEventListener('touchstart', (e) => {
+        // Trigger Mobile Keyboard ONLY when the keyboard button is tapped
+        kbBtn.addEventListener('click', (e) => {
+            e.preventDefault();
             keyboardTrap.focus();
         });
 
