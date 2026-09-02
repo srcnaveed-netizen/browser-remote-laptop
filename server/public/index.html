@@ -1,0 +1,62 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <title>My Remote Laptop</title>
+    <style>
+        body { margin: 0; overflow: hidden; background: #000; }
+        /* Stretches screen to fill browser window exactly. Default cursor for native feel */
+        #screen { width: 100vw; height: 100vh; object-fit: fill; cursor: default; }
+    </style>
+</head>
+<body>
+    <img id="screen" alt="Waiting for home laptop to connect..."/>
+
+    <script src="/socket.io/socket.io.js"></script>
+    <script>
+        const socket = io();
+        const screen = document.getElementById('screen');
+
+        // Display incoming video frames
+        socket.on('screen_frame', (data) => {
+            screen.src = "data:image/jpeg;base64," + data;
+        });
+
+        // Capture Mouse Movement
+        screen.addEventListener('mousemove', (e) => {
+            const rect = screen.getBoundingClientRect();
+            const x = (e.clientX - rect.left) / rect.width;
+            const y = (e.clientY - rect.top) / rect.height;
+            socket.emit('mouse_move', { x, y });
+        });
+
+        // Capture Mouse Clicks
+        screen.addEventListener('mousedown', (e) => {
+            const button = e.button === 0 ? 'left' : (e.button === 2 ? 'right' : 'middle');
+            socket.emit('mouse_click', { button });
+        });
+
+        // Capture Keyboard Typing
+        window.addEventListener('keydown', (e) => {
+            e.preventDefault(); 
+            socket.emit('key_press', { key: e.key.toLowerCase() });
+        });
+
+        // Prevent right-click menu from opening in the browser
+        window.addEventListener('contextmenu', e => e.preventDefault());
+
+        // DOUBLE CLICK TO LARP (Enter Fullscreen)
+        window.addEventListener('dblclick', () => {
+            if (!document.fullscreenElement) {
+                // Enter fullscreen
+                document.documentElement.requestFullscreen().catch(err => {
+                    console.log(`Error attempting to enable fullscreen: ${err.message}`);
+                });
+            } else {
+                // Exit fullscreen if you double click again
+                document.exitFullscreen();
+            }
+        });
+    </script>
+</body>
+</html>

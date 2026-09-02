@@ -1,0 +1,5 @@
+python-socketio[client]
+mss
+pyautogui
+opencv-python
+numpy
